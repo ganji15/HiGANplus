@@ -1,0 +1,57 @@
+device: 'cuda:0'
+model: 'recognize_model'
+dataset: 'iam_word'
+seed: 123456
+img_height: 64
+
+training:
+  dset_name: 'iam_word'
+#  resume: 'ckpt_ocr/gan_aug/ckpts/last.pth'
+  resume: ''
+  dset_split: 'trnval'
+  augment: True
+  epochs: 74
+  lr_policy: 'linear'
+  start_decay_epoch: 40
+  n_epochs_decay: 30
+  batch_size: 128
+  # optimization:
+  lr: 1.0e-3
+  # sampling and saving
+  print_iter_val: 20
+  start_save_epoch_val: 20
+  save_epoch_val: 4
+  ckpt_dir: 'ckpts'
+  n_class: 80
+  sort_input: true
+  pretrained_backbone: ''
+
+
+valid:
+  dset_name: 'iam_word'
+  dset_split: 'test'
+  batch_size: 256
+  n_class: 80
+  # ctc decoder configuration
+  ctcdecode:
+    model_path: ~
+    blank_id: 0
+    alpha: 1
+    beta: 3
+    beam_width: 32
+    cutoff_prob: 0.9999
+    cutoff_top_n: 32
+    num_processes: 8
+
+
+OcrModel:
+  resolution: 16
+  max_dim: 256
+  in_channel: 1
+  norm: 'bn'
+  init: 'none'
+  dropout: 0.2
+  # ctc config
+  n_class: 80
+  rnn_depth: 2
+  bidirectional: True

@@ -1,0 +1,171 @@
+device: 'cuda:0'
+model: 'gl_adversarial_model'
+dataset: 'iam_word_org'
+seed: 123456
+img_height: 64
+char_width: 32
+
+
+training:
+  dset_split: 'trnval'
+  epochs: 70
+  lr_policy: 'linear'
+  start_decay_epoch: 25
+  n_epochs_decay: 46
+  batch_size: 8
+  eval_batch_size: 8
+  sample_nrow: 3
+  # optimization:
+  lr: 2.0e-4
+  adam_b1: 0.5
+  adam_b2: 0.999
+  # sampling and saving
+  sample_iter_val: 200
+  print_iter_val: 20
+  start_save_epoch_val: 20
+  save_epoch_val: 2
+  sample_dir: 'imgs'
+  ckpt_dir: 'ckpts'
+  lexicon: './data/english_words.txt'
+  max_word_len: 20
+  n_class: 80
+  capitalize_ratio: 0.5
+  blank_ratio: 0.
+  sort_input: true
+  num_critic_train: 4
+  vae_mode: true
+  lambda_kl: 0.0001
+  lambda_ctx: 2.0
+  lambda_gram: 2.0
+  pretrained_w: './pretrained/wid_iam_new.pth'
+  pretrained_r: './pretrained/ocr_iam_new.pth'
+  pretrained_ckpt: ''
+
+
+valid:
+  dset_name: 'iam_word_org'
+  dset_split: 'test'
+  use_rand_corpus: false
+  n_rand_repeat: 10
+  batch_size: 32
+  dims: 2048
+  mmd_degree: 3
+  mmd_gamma: ~
+  mmd_coef0: 1.
+  mmd_subsets: 50
+  mmd_subset_size: 1000
+  mmd_var: true
+  pretrained_test_w: './pretrained/wid_iam_test.pth'
+  test_wid_model:
+    n_writer: 128
+    in_dim: 256
+    init: 'none'
+  ctcdecode:
+    model_path: ~ #'./data/english_word_3gram.binary'
+    blank_id: 0
+    alpha: 1
+    beta: 3
+    beam_width: 32
+    cutoff_prob: 0.9999
+    cutoff_top_n: 32
+    num_processes: 8
+
+
+test:
+  interp_num: 7
+  nrow: 8
+
+
+# network configuration
+GenModel:
+  G_ch: 64
+  style_dim: 32
+  bottom_width: 4
+  bottom_height: 4
+  resolution: 64
+  G_kernel_size: 3
+  G_attn: '0'
+  n_class: 80
+  embed_dim: 120
+  embed_pad_idx: 0
+  embed_max_norm: 1.0
+  num_G_SVs: 1
+  num_G_SV_itrs: 1
+  cross_replica: false
+  mybn: false
+  BN_eps: 1.e-05
+  SN_eps: 1.e-08
+  init: 'N02'
+  G_param: 'SN'
+  norm_style: 'bn'
+  bn_linear: 'SN'
+  input_nc: 1
+
+
+DiscModel:
+  D_ch: 64
+  D_wide: true
+  resolution: 64
+  D_kernel_size: 3
+  D_attn: '0'
+  n_class: 80
+  num_D_SVs: 1
+  num_D_SV_itrs: 1
+  SN_eps: 1.e-08
+  output_dim: 1
+  init: 'N02'
+  D_param: 'SN'
+  bn_linear: 'SN'
+  input_nc: 1
+  one_hot: true
+
+
+PatchDiscModel:
+  D_ch: 64
+  D_wide: true
+  resolution: 32
+  D_kernel_size: 3
+  D_attn: '0'
+  n_class: 80
+  num_D_SVs: 1
+  num_D_SV_itrs: 1
+  SN_eps: 1.e-08
+  output_dim: 1
+  init: 'N02'
+  D_param: 'SN'
+  bn_linear: 'SN'
+  input_nc: 1
+  one_hot: true
+
+OcrModel:
+  resolution: 16
+  max_dim: 256
+  in_channel: 1
+  norm: 'bn'
+  init: 'none'
+  dropout: 0.
+  # ctc config
+  n_class: 80
+  rnn_depth: 2
+  bidirectional: true
+
+
+StyBackbone:
+  resolution: 16
+  max_dim: 256
+  in_channel: 1
+  init: 'N02'
+  dropout: 0.0
+  norm: 'bn'
+
+
+EncModel:
+  style_dim: 32
+  in_dim: 256
+  init: 'none'
+
+
+WidModel:
+  n_writer: 372
+  in_dim: 256
+  init: 'none'
