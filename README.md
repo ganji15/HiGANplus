@@ -52,7 +52,7 @@ For convenience, here we provide the processed h5py files [trnvalset_words64_Org
 
 #### Reference-guided synthesis
 `python eval_demo.py --config ./configs/gan_iam.yml --ckpt ./pretrained/deploy_HiGAN+.pth --mode style`
-![Style](docs/imgs/Genstyle.png)
+![Style](docs/imgs/GenStyle.png)
 
 #### Text synthesis
 `python eval_demo.py --config ./configs/gan_iam.yml --ckpt ./pretrained/deploy_HiGAN+.pth --mode text`
