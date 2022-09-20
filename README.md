@@ -3,6 +3,7 @@
 ## Introduction
 This is a PyTorch implementation of the paper **"HiGAN+: Handwriting Imitation GAN with Disentangled
 Representations"** (authored by **Ji Gan, Weiwiang Wang\*, Jiaxu Leng, Xinbo Gao\*.** )
+
 HiGAN+ can generate diverse and realistic handwritten text images (with **64**-pixel height) conditioned
 on arbitrary textual contents and calligraphic styles.
 
