@@ -1,4 +1,4 @@
-# HiGAN
+# HiGAN+
 
 ## Introduction
 This is a PyTorch implementation of the paper **"HiGAN+: Handwriting Imitation GAN with Disentangled
