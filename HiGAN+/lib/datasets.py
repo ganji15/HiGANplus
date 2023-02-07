@@ -4,6 +4,7 @@ from PIL import Image
 import cv2
 from copy import deepcopy
 import itertools
+import glob
 
 import torch
 from torch.utils.data import Dataset
@@ -247,6 +248,66 @@ class Hdf5Dataset(Dataset):
         print('save->', save_path)
 
 
+class ImageDataset(Hdf5Dataset):
+    ImgHeight = 64
+
+    def __init__(self, *args, **kwargs):
+        super(ImageDataset, self).__init__(*args, **kwargs)
+
+    def _load_h5py(self, file_path, normalize_wid=True):
+        assert os.path.exists(file_path), file_path + "does not exist!"
+
+        all_imgs, all_texts = [], []
+        fileExtensions = ["jpg", "jpeg", "png", "bmp", "gif"]
+        listOfFiles = []
+        for extension in fileExtensions:
+            listOfFiles.extend(glob.glob(os.path.join(file_path, "*."+ extension)))
+
+        for fn in listOfFiles:
+            img = cv2.imread(fn, cv2.IMREAD_GRAYSCALE)
+
+            # Read image labels
+            label_text = os.path.basename(fn).split('.')[0]
+
+            # Normalize image-height
+            h, w = img.shape[:2]
+            r = self.ImgHeight / float(h)
+            new_w = max(int(w * r), int(ImgHeight / 4 * len(label_text)))
+            dim = (new_w, ImgHeight)
+            if new_w < w:
+                resize_img = cv2.resize(img, dim, interpolation=cv2.INTER_AREA)
+            else:
+                resize_img = cv2.resize(img, dim, interpolation=cv2.INTER_LINEAR)
+            res_img = 255 - resize_img
+
+            all_imgs.append(res_img)
+            all_texts.append(label_text)
+
+        '''========prepare image dataset==========='''
+        img_seek_idxs, img_lens = [], []
+        cur_seek_idx = 0
+        for img in all_imgs:
+            img_seek_idxs.append(cur_seek_idx)
+            img_lens.append(img.shape[-1])
+            cur_seek_idx += img.shape[-1]
+
+        lb_seek_idxs, lb_lens = [], []
+        cur_seek_idx = 0
+        for lb in all_texts:
+            lb_seek_idxs.append(cur_seek_idx)
+            lb_lens.append(len(lb))
+            cur_seek_idx += len(lb)
+
+        self.imgs = np.concatenate(all_imgs, axis=-1).astype(np.uint8)
+        save_texts = list(itertools.chain(*all_texts))
+        self.lbs = [ord(ch) for ch in save_texts]
+        self.img_seek_idxs, self.lb_seek_idxs =\
+            np.array(img_seek_idxs).astype(np.int64), np.array(lb_seek_idxs).astype(np.int64)
+        self.img_lens, self.lb_lens = \
+            np.array(img_lens).astype(np.int32), np.array(lb_lens).astype(np.int32)
+        self.wids = np.zeros((len(all_imgs),)).astype(np.int32)
+
+
 def get_dataset(dset_name, split, wid_aug=False, recogn_aug=False, process_style=False):
     name = dset_name.strip()
     tag = name.split('_')[0]
@@ -261,11 +322,18 @@ def get_dataset(dset_name, split, wid_aug=False, recogn_aug=False, process_style
         transforms = None
     else:
         transforms = Compose(transforms)
-    dataset = Hdf5Dataset(data_roots[tag],
-                          data_paths[name][split],
-                          transforms=transforms,
-                          alphabet_key=alphabet_key,
-                          process_style=process_style)
+
+    if dset_name.startswith('custom'):
+        dataset = ImageDataset(root=split, split='',
+                               transforms=transforms,
+                               alphabet_key=alphabet_key,
+                               process_style=process_style)
+    else:
+        dataset = Hdf5Dataset(data_roots[tag],
+                              data_paths[name][split],
+                              transforms=transforms,
+                              alphabet_key=alphabet_key,
+                              process_style=process_style)
     return dataset
 
 

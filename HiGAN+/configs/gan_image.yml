@@ -1,0 +1,124 @@
+device: 'cuda:0'
+model: 'gl_adversarial_model'
+dataset: 'custom'
+seed: 123456
+img_height: 64
+char_width: 32
+
+training:
+  dset_split: './data/image_samples/'
+  epochs: 70
+  batch_size: 4
+  eval_batch_size: 4
+  # optimization:
+  ckpt_dir: 'ckpts'
+  lexicon: './data/english_words.txt'
+  max_word_len: 20
+  n_class: 80
+  capitalize_ratio: 0.5
+  blank_ratio: 0.
+  sort_input: true
+  vae_mode: true
+
+valid:
+  dset_name: 'custom'
+  dset_split: './data/image_samples/'
+
+test:
+  interp_num: 7
+  nrow: 4
+
+
+# network configuration
+GenModel:
+  G_ch: 64
+  style_dim: 32
+  bottom_width: 4
+  bottom_height: 4
+  resolution: 64
+  G_kernel_size: 3
+  G_attn: '0'
+  n_class: 80
+  embed_dim: 120
+  embed_pad_idx: 0
+  embed_max_norm: 1.0
+  num_G_SVs: 1
+  num_G_SV_itrs: 1
+  cross_replica: false
+  mybn: false
+  BN_eps: 1.e-05
+  SN_eps: 1.e-08
+  init: 'N02'
+  G_param: 'SN'
+  norm_style: 'bn'
+  bn_linear: 'SN'
+  input_nc: 1
+
+
+DiscModel:
+  D_ch: 64
+  D_wide: true
+  resolution: 64
+  D_kernel_size: 3
+  D_attn: '0'
+  n_class: 80
+  num_D_SVs: 1
+  num_D_SV_itrs: 1
+  SN_eps: 1.e-08
+  output_dim: 1
+  init: 'N02'
+  D_param: 'SN'
+  bn_linear: 'SN'
+  input_nc: 1
+  one_hot: true
+
+
+PatchDiscModel:
+  D_ch: 64
+  D_wide: true
+  resolution: 32
+  D_kernel_size: 3
+  D_attn: '0'
+  n_class: 80
+  num_D_SVs: 1
+  num_D_SV_itrs: 1
+  SN_eps: 1.e-08
+  output_dim: 1
+  init: 'N02'
+  D_param: 'SN'
+  bn_linear: 'SN'
+  input_nc: 1
+  one_hot: true
+
+OcrModel:
+  resolution: 16
+  max_dim: 256
+  in_channel: 1
+  norm: 'bn'
+  init: 'none'
+  dropout: 0.
+  # ctc config
+  n_class: 80
+  rnn_depth: 2
+  bidirectional: true
+
+
+StyBackbone:
+  resolution: 16
+  max_dim: 256
+  in_channel: 1
+  init: 'N02'
+  dropout: 0.0
+  norm: 'bn'
+
+
+EncModel:
+  style_dim: 32
+  in_dim: 256
+  init: 'none'
+
+
+WidModel:
+  n_writer: 372
+  in_dim: 256
+  init: 'none'

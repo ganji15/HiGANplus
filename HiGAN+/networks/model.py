@@ -449,11 +449,11 @@ class AdversarialModel(BaseModel):
             get_dataset(self.opt.dataset, self.opt.training.dset_split, process_style=True),
             batch_size=self.opt.test.nrow,
             shuffle=True,
-            collate_fn=self.collect_fn
+            collate_fn=self.collect_fn,
+            drop_last=False
         )
 
         with torch.no_grad():
-            nrow, ncol = self.opt.test.nrow, 2
             while True:
                 text = input('input text: ')
                 if len(text) == 0:
@@ -472,13 +472,13 @@ class AdversarialModel(BaseModel):
                 else:
                     fake_lbs, fake_lb_lens = self.label_converter.encode(texts)
 
+                nrow = batch['style_imgs'].size(0)
                 fake_lbs = fake_lbs.repeat(nrow, 1).to(self.device)
                 fake_lb_lens = fake_lb_lens.repeat(nrow,).to(self.device)
                 enc_styles = self.models.E(real_imgs, real_img_lens, self.models.B).unsqueeze(1).\
                                 repeat(1, ncol, 1).view(nrow * ncol, self.opt.EncModel.style_dim)
 
                 gen_imgs = self.models.G(enc_styles, fake_lbs, fake_lb_lens)
-                recn_styles = self.models.E(gen_imgs, fake_lb_lens * self.opt.char_width, self.models.B)
                 gen_imgs, gen_img_lens = rescale_images2(gen_imgs, fake_lb_lens * self.opt.char_width, fake_lb_lens,
                                            batch['org_img_lens'].repeat_interleave(ncol).to(self.device),
                                            batch['lb_lens'].repeat_interleave(ncol).to(self.device))
@@ -527,7 +527,6 @@ class AdversarialModel(BaseModel):
                 rand_z.sample_()
                 rand_styles = rand_z.unsqueeze(1).repeat(1, ncol, 1).view(nrow * ncol, self.opt.GenModel.style_dim)
                 gen_imgs = self.models.G(rand_styles, fake_lbs, fake_lb_lens)
-                enc_styles = self.models.E(gen_imgs, fake_lb_lens * self.opt.char_width, self.models.B)
                 gen_imgs = (1 - gen_imgs).squeeze().cpu().numpy() * 127
                 plt.figure()
                 for i in range(nrow):
@@ -546,7 +545,8 @@ class AdversarialModel(BaseModel):
             get_dataset(self.opt.dataset, self.opt.training.dset_split, process_style=True),
             batch_size=self.opt.test.nrow,
             shuffle=True,
-            collate_fn=self.collect_fn
+            collate_fn=self.collect_fn,
+            drop_last=False
         )
 
         def get_space_index(text):
@@ -557,7 +557,6 @@ class AdversarialModel(BaseModel):
             return idxs
 
         with torch.no_grad():
-            nrow = self.opt.test.nrow
             while True:
                 text = input('input text: ')
                 if len(text) == 0:
@@ -569,6 +568,7 @@ class AdversarialModel(BaseModel):
                 fake_lbs = torch.LongTensor(fake_lbs)
                 fake_lb_lens = torch.IntTensor([len(text)])
 
+                nrow = real_imgs.size(0)
                 fake_lbs = fake_lbs.repeat(nrow, 1).to(self.device)
                 fake_lb_lens = fake_lb_lens.repeat(nrow,).to(self.device)
                 enc_styles = self.models.E(real_imgs, real_img_lens, self.models.B)
